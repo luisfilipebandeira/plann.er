@@ -1,4 +1,4 @@
-package com.luisbandeira.planner.activities;
+package com.luisbandeira.planner.activity;
 
 import java.util.UUID;
 

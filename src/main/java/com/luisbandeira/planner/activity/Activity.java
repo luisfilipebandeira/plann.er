@@ -1,4 +1,4 @@
-package com.luisbandeira.planner.activities;
+package com.luisbandeira.planner.activity;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
