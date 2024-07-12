@@ -2,6 +2,8 @@ package com.luisbandeira.planner.trip;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -15,6 +17,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.luisbandeira.planner.participant.Participant;
+import com.luisbandeira.planner.participant.ParticipantCreateResponse;
+import com.luisbandeira.planner.participant.ParticipantData;
+import com.luisbandeira.planner.participant.ParticipantRequestPayload;
 import com.luisbandeira.planner.participant.ParticipantService;
 
 @RestController
@@ -33,7 +39,7 @@ public class TripController {
 
         this.repository.save(newTrip);
 
-        this.participantService.registerParticipantToEvent(payload.emails_to_invite(), newTrip.getId());
+        this.participantService.registerParticipantsToEvent(payload.emails_to_invite(), newTrip);
     
         return ResponseEntity.ok(new TripCreateResponse(newTrip.getId()));
     }
@@ -78,5 +84,31 @@ public class TripController {
         }
 
         return ResponseEntity.notFound().build();
+    }
+
+    @PostMapping("/{tripId}/invite")
+    public ResponseEntity<ParticipantCreateResponse> inviteParticipant(@PathVariable UUID tripId, @RequestBody ParticipantRequestPayload payload) {
+        Optional<Trip> trip = this.repository.findById(tripId);
+
+        if(trip.isPresent()) {
+            Trip rawTrip = trip.get();
+
+            ParticipantCreateResponse participantResponse = this.participantService.registerParticipantToEvent(payload.email(), rawTrip);
+
+            if (rawTrip.getIsConfirmed()) {
+                this.participantService.triggerConfirmationEmailToParticipant(payload.email());
+            }
+
+            return ResponseEntity.ok(participantResponse);
+        }
+
+        return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/{tripId}/participants")
+    public ResponseEntity<List<ParticipantData>> getAllParticipants(@PathVariable UUID tripId) {
+        List<ParticipantData> participants = this.participantService.getAllParticipantsFromTrip(tripId);
+
+        return ResponseEntity.ok(participants);
     }
 }
